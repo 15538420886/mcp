@@ -20,6 +20,250 @@ An MCP service for deploying HTML content, folders, or full-stack projects to Ed
 
 - Node.js 18 or higher
 
+## Deployment on Tencent Cloud
+
+This MCP service supports multiple deployment options. Choose the one that best fits your needs.
+
+### Option 1: Deploy Self-Hosted Version to EdgeOne Pages (Recommended)
+
+This is the simplest and fastest deployment method, suitable for scenarios requiring HTTP access.
+
+#### Step 1: One-Click Deploy to EdgeOne Pages
+
+1. Visit the [self-hosted repository](https://github.com/TencentEdgeOne/self-hosted-pages-mcp)
+2. Click the "One-Click Deploy" button to deploy the service to EdgeOne Pages
+3. Complete the deployment configuration as prompted
+
+#### Step 2: Configure KV Storage
+
+After deployment, configure KV storage for storing website files:
+
+1. Go to EdgeOne Pages console
+2. Find KV Storage configuration
+3. Follow the [KV Storage Setup Guide](https://pages.edgeone.ai/document/kv-storage)
+
+#### Step 3: Bind Custom Domain (Optional)
+
+1. Add a custom domain in project settings
+2. Configure DNS CNAME record
+3. Wait for domain verification
+4. Refer to [Custom Domain Binding Guide](https://pages.edgeone.ai/document/custom-domain)
+
+#### Step 4: Configure MCP Client
+
+After deployment, add to your MCP configuration file:
+
+```json
+{
+  "mcpServers": {
+    "edgeone-pages": {
+      "url": "https://your-custom-domain.com/mcp-server"
+    }
+  }
+}
+```
+
+**Advantages:**
+- ✅ Zero server maintenance cost
+- ✅ Auto-scaling and high availability
+- ✅ Global edge acceleration
+- ✅ Custom domain and HTTPS support
+
+### Option 2: Deploy on Tencent Cloud CVM
+
+Suitable for scenarios requiring full server control or stdio transport.
+
+#### Step 1: Prepare CVM Instance
+
+1. Log in to [Tencent Cloud Console](https://console.cloud.tencent.com/)
+2. Create or select a CVM instance
+3. Recommended configuration:
+   - **OS**: Ubuntu 20.04 LTS or CentOS 7+
+   - **CPU**: 2 cores or more
+   - **Memory**: 4GB or more
+   - **Network**: Configure public IP or elastic IP
+
+#### Step 2: Install Node.js Environment
+
+**Ubuntu/Debian:**
+```bash
+# Update system packages
+sudo apt update
+
+# Install Node.js 18.x
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Verify installation
+node --version
+npm --version
+```
+
+**CentOS/RHEL:**
+```bash
+# Install Node.js 18.x
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
+
+# Verify installation
+node --version
+npm --version
+```
+
+#### Step 3: Deploy MCP Service
+
+```bash
+# Clone project (or upload project files)
+git clone https://github.com/TencentEdgeOne/edgeone-pages-mcp.git
+cd edgeone-pages-mcp
+
+# Install dependencies
+npm install
+
+# Build project
+npm run build
+
+# Configure environment variables
+cat > .env << EOF
+EDGEONE_PAGES_API_TOKEN=your-api-token-here
+EDGEONE_PAGES_PROJECT_NAME=your-project-name
+EOF
+```
+
+#### Step 4: Configure Process Management (Using PM2)
+
+```bash
+# Install PM2
+sudo npm install -g pm2
+
+# Start service
+pm2 start dist/index.js --name edgeone-pages-mcp
+
+# Set auto-start on boot
+pm2 startup
+pm2 save
+
+# Check service status
+pm2 status
+pm2 logs edgeone-pages-mcp
+```
+
+#### Step 5: Configure Firewall
+
+```bash
+# Ubuntu/Debian (UFW)
+sudo ufw allow 22/tcp    # SSH
+# If using HTTP transport, open corresponding port
+# sudo ufw allow 8080/tcp
+
+# CentOS (firewalld)
+sudo firewall-cmd --permanent --add-service=ssh
+# sudo firewall-cmd --permanent --add-port=8080/tcp
+sudo firewall-cmd --reload
+```
+
+#### Step 6: Configure MCP Client
+
+If using stdio transport (local or SSH):
+
+```json
+{
+  "mcpServers": {
+    "edgeone-pages-mcp-server": {
+      "command": "node",
+      "args": ["/path/to/edgeone-pages-mcp/dist/index.js"],
+      "env": {
+        "EDGEONE_PAGES_API_TOKEN": "your-api-token",
+        "EDGEONE_PAGES_PROJECT_NAME": "your-project-name"
+      }
+    }
+  }
+}
+```
+
+**Advantages:**
+- ✅ Full control over server environment
+- ✅ Support for stdio transport
+- ✅ Suitable for enterprise intranet environments
+
+### Option 3: Deploy Using Tencent CloudBase
+
+Suitable for scenarios requiring quick deployment with Tencent Cloud managed services.
+
+#### Step 1: Create CloudBase Environment
+
+1. Visit [Tencent CloudBase Console](https://console.cloud.tencent.com/tcb)
+2. Create a new environment or select an existing one
+3. Choose Node.js 18+ runtime
+
+#### Step 2: Deploy Code
+
+1. Select "Cloud Functions" in CloudBase console
+2. Create a new function or upload code
+3. Configure function entry as `index.js`
+4. Set environment variables:
+   - `EDGEONE_PAGES_API_TOKEN`
+   - `EDGEONE_PAGES_PROJECT_NAME`
+
+#### Step 3: Configure HTTP Trigger
+
+1. Add HTTP trigger in function configuration
+2. Configure access path and authentication
+3. Get trigger URL
+
+#### Step 4: Configure MCP Client
+
+```json
+{
+  "mcpServers": {
+    "edgeone-pages-mcp-server": {
+      "url": "https://your-function-url.tencentcloudapi.com"
+    }
+  }
+}
+```
+
+**Advantages:**
+- ✅ No server management required
+- ✅ Auto-scaling
+- ✅ Integrated with Tencent Cloud services
+
+### Security Recommendations
+
+Regardless of deployment method, it's recommended to:
+
+1. **Protect API Token**:
+   - Use environment variables for sensitive information
+   - Don't commit `.env` files to repository
+   - Rotate API tokens regularly
+
+2. **Network Security**:
+   - Use HTTPS for service access
+   - Configure firewall rules to limit access sources
+   - Use VPN or intranet access (if applicable)
+
+3. **Monitoring and Logging**:
+   - Configure log collection and monitoring
+   - Set up alert rules
+   - Regularly check service status
+
+### Troubleshooting
+
+**Issue: Service won't start**
+- Check if Node.js version meets requirements (18+)
+- Verify dependencies are correctly installed: `npm install`
+- Check logs: `pm2 logs` or check cloud function logs
+
+**Issue: Invalid API Token**
+- Verify token is correctly configured
+- Check if token has expired
+- Refer to [API Token Documentation](https://edgeone.ai/document/177158578324279296)
+
+**Issue: Deployment failed**
+- Check network connection
+- Verify API token permissions
+- Check detailed error logs
+
 ## MCP Configuration
 
 ### stdio MCP Server

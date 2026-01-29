@@ -20,6 +20,250 @@
 
 - Node.js 18 或更高版本
 
+## 在腾讯云上部署
+
+本 MCP 服务支持多种部署方式，您可以根据需求选择最适合的方案。
+
+### 方式一：使用自托管版本部署到 EdgeOne Pages（推荐）
+
+这是最简单快捷的部署方式，适合需要 HTTP 访问的场景。
+
+#### 步骤 1：一键部署到 EdgeOne Pages
+
+1. 访问 [自托管版本仓库](https://github.com/TencentEdgeOne/self-hosted-pages-mcp)
+2. 点击"一键部署"按钮，将服务部署到 EdgeOne Pages
+3. 按照提示完成部署配置
+
+#### 步骤 2：配置 KV 存储
+
+部署完成后，需要配置 KV 存储用于存储网站文件：
+
+1. 进入 EdgeOne Pages 控制台
+2. 找到 KV Storage 配置
+3. 按照 [KV 存储设置指南](https://pages.edgeone.ai/document/kv-storage) 完成配置
+
+#### 步骤 3：绑定自定义域名（可选）
+
+1. 在项目设置中添加自定义域名
+2. 配置 DNS CNAME 记录
+3. 等待域名验证通过
+4. 参考 [自定义域名绑定指南](https://pages.edgeone.ai/document/custom-domain)
+
+#### 步骤 4：配置 MCP 客户端
+
+部署完成后，在 MCP 配置文件中添加：
+
+```json
+{
+  "mcpServers": {
+    "edgeone-pages": {
+      "url": "https://your-custom-domain.com/mcp-server"
+    }
+  }
+}
+```
+
+**优势：**
+- ✅ 零服务器运维成本
+- ✅ 自动扩展和高可用
+- ✅ 全球边缘加速
+- ✅ 支持自定义域名和 HTTPS
+
+### 方式二：在腾讯云 CVM 上部署
+
+适合需要完全控制服务器环境或需要 stdio 传输方式的场景。
+
+#### 步骤 1：准备 CVM 实例
+
+1. 登录 [腾讯云控制台](https://console.cloud.tencent.com/)
+2. 创建或选择一台 CVM 实例
+3. 推荐配置：
+   - **操作系统**：Ubuntu 20.04 LTS 或 CentOS 7+
+   - **CPU**：2 核或以上
+   - **内存**：4GB 或以上
+   - **网络**：配置公网 IP 或弹性公网 IP
+
+#### 步骤 2：安装 Node.js 环境
+
+**Ubuntu/Debian：**
+```bash
+# 更新系统包
+sudo apt update
+
+# 安装 Node.js 18.x
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# 验证安装
+node --version
+npm --version
+```
+
+**CentOS/RHEL：**
+```bash
+# 安装 Node.js 18.x
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
+
+# 验证安装
+node --version
+npm --version
+```
+
+#### 步骤 3：部署 MCP 服务
+
+```bash
+# 克隆项目（或上传项目文件）
+git clone https://github.com/TencentEdgeOne/edgeone-pages-mcp.git
+cd edgeone-pages-mcp
+
+# 安装依赖
+npm install
+
+# 构建项目
+npm run build
+
+# 配置环境变量
+cat > .env << EOF
+EDGEONE_PAGES_API_TOKEN=your-api-token-here
+EDGEONE_PAGES_PROJECT_NAME=your-project-name
+EOF
+```
+
+#### 步骤 4：配置进程管理（使用 PM2）
+
+```bash
+# 安装 PM2
+sudo npm install -g pm2
+
+# 启动服务
+pm2 start dist/index.js --name edgeone-pages-mcp
+
+# 设置开机自启
+pm2 startup
+pm2 save
+
+# 查看服务状态
+pm2 status
+pm2 logs edgeone-pages-mcp
+```
+
+#### 步骤 5：配置防火墙
+
+```bash
+# Ubuntu/Debian (UFW)
+sudo ufw allow 22/tcp    # SSH
+# 如果使用 HTTP 传输，还需要开放相应端口
+# sudo ufw allow 8080/tcp
+
+# CentOS (firewalld)
+sudo firewall-cmd --permanent --add-service=ssh
+# sudo firewall-cmd --permanent --add-port=8080/tcp
+sudo firewall-cmd --reload
+```
+
+#### 步骤 6：配置 MCP 客户端
+
+如果使用 stdio 传输（本地或 SSH）：
+
+```json
+{
+  "mcpServers": {
+    "edgeone-pages-mcp-server": {
+      "command": "node",
+      "args": ["/path/to/edgeone-pages-mcp/dist/index.js"],
+      "env": {
+        "EDGEONE_PAGES_API_TOKEN": "your-api-token",
+        "EDGEONE_PAGES_PROJECT_NAME": "your-project-name"
+      }
+    }
+  }
+}
+```
+
+**优势：**
+- ✅ 完全控制服务器环境
+- ✅ 支持 stdio 传输方式
+- ✅ 适合企业内网环境
+
+### 方式三：使用腾讯云云开发平台部署
+
+适合需要快速部署且希望使用腾讯云托管服务的场景。
+
+#### 步骤 1：创建云开发环境
+
+1. 访问 [腾讯云云开发控制台](https://console.cloud.tencent.com/tcb)
+2. 创建新环境或选择现有环境
+3. 选择 Node.js 18+ 运行环境
+
+#### 步骤 2：部署代码
+
+1. 在云开发控制台选择"云函数"
+2. 创建新函数或上传代码
+3. 配置函数入口为 `index.js`
+4. 设置环境变量：
+   - `EDGEONE_PAGES_API_TOKEN`
+   - `EDGEONE_PAGES_PROJECT_NAME`
+
+#### 步骤 3：配置 HTTP 触发器
+
+1. 在函数配置中添加 HTTP 触发器
+2. 配置访问路径和认证方式
+3. 获取触发器 URL
+
+#### 步骤 4：配置 MCP 客户端
+
+```json
+{
+  "mcpServers": {
+    "edgeone-pages-mcp-server": {
+      "url": "https://your-function-url.tencentcloudapi.com"
+    }
+  }
+}
+```
+
+**优势：**
+- ✅ 无需管理服务器
+- ✅ 自动扩缩容
+- ✅ 集成腾讯云服务
+
+### 安全建议
+
+无论使用哪种部署方式，都建议：
+
+1. **保护 API Token**：
+   - 使用环境变量存储敏感信息
+   - 不要将 `.env` 文件提交到代码仓库
+   - 定期轮换 API Token
+
+2. **网络安全**：
+   - 使用 HTTPS 访问服务
+   - 配置防火墙规则限制访问来源
+   - 使用 VPN 或内网访问（如适用）
+
+3. **监控和日志**：
+   - 配置日志收集和监控
+   - 设置告警规则
+   - 定期检查服务状态
+
+### 故障排查
+
+**问题：服务无法启动**
+- 检查 Node.js 版本是否符合要求（18+）
+- 检查依赖是否正确安装：`npm install`
+- 查看日志：`pm2 logs` 或查看云函数日志
+
+**问题：API Token 无效**
+- 验证 Token 是否正确配置
+- 检查 Token 是否过期
+- 参考 [API Token 文档](https://edgeone.ai/document/177158578324279296)
+
+**问题：部署失败**
+- 检查网络连接
+- 验证 API Token 权限
+- 查看详细错误日志
+
 ## 配置 MCP
 
 ### stdio MCP 服务器
