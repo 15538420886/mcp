@@ -137,6 +137,83 @@
 - 支持全栈应用的部署
 - 可选择更新现有项目或创建新项目
 
+### 自定义域名配置
+
+EdgeOne Pages MCP 支持自定义域名部署。在 EdgeOne Pages 控制台配置自定义域名后，部署将自动使用您的自定义域名，而不是默认的临时链接。
+
+#### 自定义域名的优势
+
+- **品牌展示**：使用您自己的品牌域名，提升专业形象
+- **SEO 优化**：有利于搜索引擎索引和排名
+- **更好的控制**：完全控制域名的 DNS 记录
+- **灵活性**：可配置多个自定义域名，方便为不同市场或目的进行管理
+
+#### 如何配置自定义域名
+
+**第一步：在控制台添加自定义域名**
+
+1. 部署项目后，打开 [EdgeOne Pages 控制台](https://console.tencentcloud.com/edgeone/pages)
+2. 进入项目设置页面
+3. 找到"域名管理"模块
+4. 点击"添加自定义域名"按钮
+5. 输入根域名（如 `example.com`）或子域名（如 `www.example.com`）
+
+**第二步：配置 DNS CNAME 记录**
+
+1. 控制台会显示一个 CNAME 记录值（如 `a4285573.xxx.example.com.dns.edgeone.site.`）
+2. 前往您的域名注册商的 DNS 管理页面
+3. 添加一条 CNAME 记录，填写：
+   - **类型**：CNAME
+   - **主机记录**：您的子域名（如 `www`）或 `@` 表示主域名
+   - **记录值**：EdgeOne Pages 提供的 CNAME 值
+   - **TTL**：600 秒（建议设置较低值以加快生效）
+4. 保存 DNS 记录
+
+**第三步：验证域名**
+
+1. 返回 EdgeOne Pages 控制台
+2. 点击"验证"按钮或等待系统自动检测 DNS 解析
+3. DNS 记录通常在几分钟内生效，最长可达 48 小时
+4. 验证成功后，域名状态将变为"通过"
+
+**第四步：配置 HTTPS（推荐）**
+
+1. 域名验证通过后，进入"HTTPS 配置"部分
+2. 申请免费 SSL 证书或使用托管 SSL 证书
+3. 证书将自动为您的自定义域名配置
+
+**第五步：使用自定义域名部署**
+
+完成上述步骤后，当您使用 `deploy_folder_or_zip` 部署时：
+
+- 如果您的项目已配置并验证通过（状态为"通过"）的自定义域名，部署将自动使用您的自定义域名
+- 返回的 URL 将是 `https://your-custom-domain.com`，而不是临时链接
+- MCP 工具中无需额外配置
+
+#### 重要注意事项
+
+- **备案要求**：如果项目的加速区域为"中国大陆可用区"或"全球可用区（含中国大陆）"，添加域名前需先在工信部完成备案
+- **域名状态**：只有状态为"通过"的域名才会在部署中自动使用
+- **多个域名**：如果配置了多个自定义域名，将使用第一个状态为"通过"的域名
+- **控制台链接**：部署后，您可以通过部署结果中提供的项目控制台链接来管理域名
+
+#### 使用自定义域名的部署结果示例
+
+```json
+{
+  "type": "custom",
+  "url": "https://www.example.com",
+  "projectId": "your-project-id",
+  "projectName": "your-project-name",
+  "consoleUrl": "https://console.tencentcloud.com/edgeone/pages/project/your-project-id/index"
+}
+```
+
+更多信息请参考：
+- [自定义域名文档](https://edgeone.ai/document/175201436224495616)
+- [DNS CNAME 配置指南](https://edgeone.ai/document/175188201357889536)
+- [HTTPS 配置指南](https://edgeone.ai/document/configuring-an-https-certificate)
+
 ## 许可证
 
 MIT

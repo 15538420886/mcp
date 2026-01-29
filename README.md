@@ -137,6 +137,83 @@ This tool supports deploying complete projects to EdgeOne Pages:
 - Supports deployment of full-stack applications
 - Option to update existing projects or create new ones
 
+### Custom Domain Configuration
+
+EdgeOne Pages MCP supports custom domain deployment. After configuring a custom domain in the EdgeOne Pages console, the deployment will automatically use your custom domain instead of the default temporary URL.
+
+#### Benefits of Custom Domain
+
+- **Brand Display**: Use your own brand domain name to enhance professional image
+- **SEO Optimization**: Beneficial for search engine indexing and ranking
+- **Better Control**: Full control of DNS records
+- **Flexibility**: Configure multiple custom domains for different markets or purposes
+
+#### How to Configure Custom Domain
+
+**Step 1: Add Custom Domain in Console**
+
+1. After deploying your project, open the [EdgeOne Pages Console](https://console.tencentcloud.com/edgeone/pages)
+2. Navigate to your project settings page
+3. Find the "Domain Management" module
+4. Click "Add Custom Domain" button
+5. Input your root domain (e.g., `example.com`) or subdomain (e.g., `www.example.com`)
+
+**Step 2: Configure DNS CNAME Record**
+
+1. The console will display a CNAME record value (e.g., `a4285573.xxx.example.com.dns.edgeone.site.`)
+2. Go to your domain registrar's DNS management page
+3. Add a CNAME record with:
+   - **Type**: CNAME
+   - **Name**: Your subdomain (e.g., `www`) or `@` for root domain
+   - **Value**: The CNAME value provided by EdgeOne Pages
+   - **TTL**: 600 seconds (recommended for faster propagation)
+4. Save the DNS record
+
+**Step 3: Verify Domain**
+
+1. Return to the EdgeOne Pages console
+2. Click "Verify" button or wait for automatic DNS detection
+3. DNS records typically take effect within minutes, up to 48 hours maximum
+4. Once verified, the domain status will change to "Pass"
+
+**Step 4: Configure HTTPS (Recommended)**
+
+1. After domain verification, go to "HTTPS Configuration" section
+2. Apply for a free SSL certificate or use a managed SSL certificate
+3. The certificate will be automatically configured for your custom domain
+
+**Step 5: Deploy with Custom Domain**
+
+After completing the above steps, when you deploy using `deploy_folder_or_zip`:
+
+- If your project has a custom domain configured and verified (Status: "Pass"), the deployment will automatically use your custom domain
+- The returned URL will be `https://your-custom-domain.com` instead of the temporary URL
+- No additional configuration is needed in the MCP tool
+
+#### Important Notes
+
+- **ICP Filing Requirement**: If your project's acceleration region is "Chinese Mainland Availability Zone" or "Global Availability Zone (including Chinese Mainland)", you must complete ICP filing with the Ministry of Industry and Information Technology before adding custom domains
+- **Domain Status**: Only domains with status "Pass" will be automatically used in deployments
+- **Multiple Domains**: If multiple custom domains are configured, the first domain with "Pass" status will be used
+- **Console URL**: After deployment, you can access the project console URL provided in the deployment result to manage domains
+
+#### Example Deployment Result with Custom Domain
+
+```json
+{
+  "type": "custom",
+  "url": "https://www.example.com",
+  "projectId": "your-project-id",
+  "projectName": "your-project-name",
+  "consoleUrl": "https://console.tencentcloud.com/edgeone/pages/project/your-project-id/index"
+}
+```
+
+For more information, refer to:
+- [Custom Domain Documentation](https://edgeone.ai/document/175201436224495616)
+- [DNS CNAME Configuration Guide](https://edgeone.ai/document/175188201357889536)
+- [HTTPS Configuration Guide](https://edgeone.ai/document/configuring-an-https-certificate)
+
 ## License
 
 MIT
